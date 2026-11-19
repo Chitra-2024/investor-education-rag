@@ -5,4 +5,5 @@ sentence-transformers
 fastapi
 uvicorn
 pydantic
-pytest
+pytest==8.3.5
+fonttools
