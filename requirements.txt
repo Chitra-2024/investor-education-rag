@@ -1,0 +1,8 @@
+pypdf
+numpy
+pandas
+sentence-transformers
+fastapi
+uvicorn
+pydantic
+pytest
