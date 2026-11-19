@@ -20,23 +20,23 @@ def embed_texts(texts):
     return get_model().encode(texts, normalize_embeddings=True, show_progress_bar=False)
 
 
-def index_dir_for(chunk_size):
-    """One folder per chunk size, e.g. data/index/c800."""
-    return INDEX_DIR / f"c{chunk_size}"
+def index_dir_for(chunk_size, mode="char"):
+    """One folder per setting, e.g. data/index/c800 or c800s (sentence mode)."""
+    suffix = "s" if mode == "sentence" else ""
+    return INDEX_DIR / f"c{chunk_size}{suffix}"
 
 
-def build_index(chunks, index_dir, chunk_size, overlap):
+def build_index(chunks, index_dir, chunk_size, overlap, mode="char"):
     index_dir.mkdir(parents=True, exist_ok=True)
     vecs = embed_texts([c["text"] for c in chunks])
     np.save(index_dir / "embeddings.npy", vecs)
     with open(index_dir / "chunks.json", "w", encoding="utf-8") as f:
         json.dump(chunks, f, ensure_ascii=False)
-    meta = {"chunk_size": chunk_size, "overlap": overlap,
+    meta = {"chunk_size": chunk_size, "overlap": overlap, "mode": mode,
             "model": EMBED_MODEL, "n_chunks": len(chunks)}
     with open(index_dir / "index_meta.json", "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2)
     print(f"Saved {len(chunks)} chunks to {index_dir}")
-
 
 def load_index(index_dir):
     vecs = np.load(index_dir / "embeddings.npy")

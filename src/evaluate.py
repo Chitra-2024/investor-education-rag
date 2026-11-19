@@ -33,8 +33,8 @@ def hit_and_rr(phrases, ranked_chunks):
     return True, 1 / max(first_ranks)
 
 
-def evaluate_retrieval(size, ks=(3, 5)):
-    vecs, chunks, meta = load_index(index_dir_for(size))
+def evaluate_retrieval(size, mode="char", ks=(3, 5)):
+    vecs, chunks, meta = load_index(index_dir_for(size, mode))
     gold = load_gold()
     answerable = gold[~gold["type"].isin(["unanswerable", "advice"])]
     qvecs = embed_texts(answerable["question"].tolist())
@@ -44,12 +44,13 @@ def evaluate_retrieval(size, ks=(3, 5)):
     for k in ks:
         hits, rrs = [], []
         for (_, row), ranked in zip(answerable.iterrows(), top):
-            hit, rr = hit_and_rr(phrases_of(row), ranked[:k])  # keep only top k
+            hit, rr = hit_and_rr(phrases_of(row), ranked[:k])
             hits.append(hit)
             rrs.append(rr)
             if not hit and k == max(ks):
-                print(f"  chunk={size} k={k} MISS  Q{row['id']} ({row['type']})")
+                print(f"  {mode} chunk={size} k={k} MISS  Q{row['id']} ({row['type']})")
         results.append({
+            "mode": mode,
             "chunk_size": size,
             "k": k,
             "n_chunks": len(chunks),
@@ -61,8 +62,9 @@ def evaluate_retrieval(size, ks=(3, 5)):
 
 if __name__ == "__main__":
     rows = []
-    for size in (500, 800, 1200):
-        rows += evaluate_retrieval(size)
+    for mode in ("char", "sentence"):
+        for size in (500, 800, 1200):
+            rows += evaluate_retrieval(size, mode)
     df = pd.DataFrame(rows)
     print()
     print(df.to_string(index=False, float_format=lambda x: f"{x:.2f}"))
